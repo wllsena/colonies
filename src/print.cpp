@@ -11,11 +11,19 @@ void clear_console() { printf("\033c"); }
 
 void print_color(const string value, const int color) {
   if (color == -1)
-    cout << value;
+    cout << FWHT(value);
   else if (color == 0)
-    cout << FBLU(value);
-  else if (color == 1)
     cout << FRED(value);
+  else if (color == 1)
+    cout << FGRN(value);
+  else if (color == 2)
+    cout << FYEL(value);
+  else if (color == 3)
+    cout << FBLU(value);
+  else if (color == 4)
+    cout << FMAG(value);
+  else if (color == 5)
+    cout << FCYN(value);
 };
 
 void print_iter(const int iter) {
@@ -90,11 +98,32 @@ void print_world(const World *world) {
   cout << string(world->x + 2, '-') << endl;
 };
 
-void print_amounts(const World *world) {
-  for (const auto &colony : world->colonies) {
-    print_color("Colony; ", colony->clan);
-    print_color(to_string(colony->amount), colony->clan);
-    print_color("; ", colony->clan);
+void print_values(const World *world) {
+  for (const auto &food : world->foods) {
+    print_color("Food: ", -1);
+    print_color(to_string(food->num), -1);
+    print_color(". Amount: ", -1);
+    print_color(to_string(int(food->amount)), -1);
+    print_color(". Consumers: ", -1);
+    print_color(to_string(food->consumers), -1);
+    print_color(".", -1);
+
+    cout << endl;
   }
-  cout << endl;
+
+  for (const auto &colony : world->colonies) {
+    print_color("Clan: ", colony->clan);
+    print_color(to_string(colony->clan), colony->clan);
+    print_color(". Food: ", colony->clan);
+    print_color(to_string(colony->amount), colony->clan);
+    print_color(". Inside: ", colony->clan);
+    print_color(to_string(colony->consumers), colony->clan);
+    print_color(". Ants: ", colony->clan);
+    print_color(to_string(colony->ants.size()), colony->clan);
+    print_color(". Pheromones: ", colony->clan);
+    print_color(to_string(colony->pheromones.size()), colony->clan);
+    print_color(".", colony->clan);
+
+    cout << endl;
+  }
 };
