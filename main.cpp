@@ -1,16 +1,15 @@
-#include "src/print.cpp"
-#include <array>
-#include <iostream>
-#include <sstream>
-#include <stdlib.h>
+#include "src/structure_and_print.cpp"
 #include <unistd.h>
 #include <vector>
 
 using namespace std;
 
 int main() {
+  int threads = 1;
   int x = 50;
   int y = 20;
+  int n_iters = 1000;
+  int sleep_time = 250000;
 
   vector<Food *> foods;
   foods.push_back(new Food(0, 30, 15, 20, 0.05, 1));
@@ -32,14 +31,14 @@ int main() {
   print_iter(0);
   print_world(world);
   print_values(world);
-  usleep(250000);
+  usleep(sleep_time);
 
-  for (int i = 1; i != 1000; i++) {
+  for (int i = 1; i != n_iters; i++) {
     world->play();
     clear_console();
     print_iter(i);
     print_world(world);
     print_values(world);
-    usleep(250000);
+    usleep(sleep_time);
   }
 }

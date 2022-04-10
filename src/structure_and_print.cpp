@@ -1,9 +1,6 @@
 #include "../include/colors.hpp"
 #include "structure.cpp"
 #include <iostream>
-#include <stdlib.h>
-#include <string>
-#include <vector>
 
 using namespace std;
 
@@ -19,11 +16,11 @@ void print_color(const string value, const int color) {
   else if (color == 2)
     cout << FYEL(value);
   else if (color == 3)
-    cout << FBLU(value);
+    cout << FCYN(value);
   else if (color == 4)
     cout << FMAG(value);
   else if (color == 5)
-    cout << FCYN(value);
+    cout << FBLU(value);
 };
 
 void print_iter(const int iter) {
