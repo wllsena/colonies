@@ -44,16 +44,16 @@ struct Food {
 };
 
 struct Pheromone {
-  int clan;
+  int num;
   int x;
   int y;
   int from_x;
   int from_y;
   int lifetime;
 
-  Pheromone(const int clan_, const int x_, const int y_, const int from_x_,
+  Pheromone(const int num_, const int x_, const int y_, const int from_x_,
             const int from_y_, const int lifetime_) {
-    clan = clan_;
+    num = num_;
     x = x_;
     y = y_;
     from_x = from_x_;
@@ -68,7 +68,7 @@ struct Pheromone {
 };
 
 struct Ant {
-  int clan;
+  int num;
   int world_x;
   int world_y;
   int colony_x;
@@ -83,9 +83,9 @@ struct Ant {
   int goal_x;
   int goal_y;
 
-  Ant(const int clan_, const int world_x_, const int world_y_,
+  Ant(const int num_, const int world_x_, const int world_y_,
       const int colony_x_, const int colony_y_, const int vision_) {
-    clan = clan_;
+    num = num_;
     world_x = world_x_;
     world_y = world_y_;
     colony_x = colony_x_;
@@ -291,7 +291,7 @@ struct Ant {
 };
 
 struct Colony {
-  int clan;
+  int num;
   int x;
   int y;
   int limit;
@@ -303,10 +303,10 @@ struct Colony {
   vector<Ant *> ants;
   vector<Pheromone *> pheromones;
 
-  Colony(const int clan_, const int x_, const int y_, const int limit_,
+  Colony(const int num_, const int x_, const int y_, const int limit_,
          const int ph_timelife_, const int n_ants, const int ant_vision,
          const int world_x, const int world_y) {
-    clan = clan_;
+    num = num_;
     x = x_;
     y = y_;
     limit = limit_;
@@ -316,7 +316,7 @@ struct Colony {
     consumers = 0;
 
     for (int i = 0; i != n_ants; i++)
-      ants.push_back(new Ant(clan_, world_x, world_y, x_, y_, ant_vision));
+      ants.push_back(new Ant(num_, world_x, world_y, x_, y_, ant_vision));
   }
 
   bool store() {
@@ -348,7 +348,7 @@ struct Colony {
       else if (result[0] == 1 and foods[result[1]]->serve())
         ant->get_food();
       else if (result[0] == 2)
-        pheromones.push_back(new Pheromone(clan, ant->x, ant->y, result[1],
+        pheromones.push_back(new Pheromone(num, ant->x, ant->y, result[1],
                                            result[2], ph_timelife));
     }
   }

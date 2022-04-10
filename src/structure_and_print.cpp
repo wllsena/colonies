@@ -53,16 +53,16 @@ void print_world(const World *world) {
   for (const auto &colony : world->colonies) {
     for (const auto &pheromone : colony->pheromones) {
       types[pheromone->y][pheromone->x] = 3;
-      colors[pheromone->y][pheromone->x] = pheromone->clan;
+      colors[pheromone->y][pheromone->x] = pheromone->num;
     }
 
     for (const auto &ant : colony->ants) {
       types[ant->y][ant->x] = 2;
-      colors[ant->y][ant->x] = colony->clan;
+      colors[ant->y][ant->x] = colony->num;
     }
 
     types[colony->y][colony->x] = 1;
-    colors[colony->y][colony->x] = colony->clan;
+    colors[colony->y][colony->x] = colony->num;
   }
 
   for (const auto &food : world->foods) {
@@ -109,17 +109,17 @@ void print_values(const World *world) {
   }
 
   for (const auto &colony : world->colonies) {
-    print_color("Clan: ", colony->clan);
-    print_color(to_string(colony->clan), colony->clan);
-    print_color(". Food: ", colony->clan);
-    print_color(to_string(colony->amount), colony->clan);
-    print_color(". Inside: ", colony->clan);
-    print_color(to_string(colony->consumers), colony->clan);
-    print_color(". Ants: ", colony->clan);
-    print_color(to_string(colony->ants.size()), colony->clan);
-    print_color(". Pheromones: ", colony->clan);
-    print_color(to_string(colony->pheromones.size()), colony->clan);
-    print_color(".", colony->clan);
+    print_color("Colony: ", colony->num);
+    print_color(to_string(colony->num), colony->num);
+    print_color(". Food: ", colony->num);
+    print_color(to_string(colony->amount), colony->num);
+    print_color(". Inside: ", colony->num);
+    print_color(to_string(colony->consumers), colony->num);
+    print_color(". Ants: ", colony->num);
+    print_color(to_string(colony->ants.size()), colony->num);
+    print_color(". Pheromones: ", colony->num);
+    print_color(to_string(colony->pheromones.size()), colony->num);
+    print_color(".", colony->num);
 
     cout << endl;
   }
