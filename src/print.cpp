@@ -7,14 +7,16 @@
 
 using namespace std;
 
+void clear_console() { printf("\033c"); }
+
 void print_color(const string value, const int color) {
   if (color == -1)
     cout << value;
   else if (color == 0)
     cout << FBLU(value);
+  else if (color == 1)
+    cout << FRED(value);
 };
-
-void clear_console() { printf("\033c"); }
 
 void print_iter(const int iter) {
   print_color("Iter: ", -1);
@@ -22,7 +24,7 @@ void print_iter(const int iter) {
   cout << endl;
 };
 
-void print_food(const int color) { print_color("#", color); };
+void print_food(const int color) { print_color("#", -1); };
 
 void print_colony(const int color) { print_color("O", color); };
 
@@ -30,7 +32,7 @@ void print_ant(const int color) { print_color("x", color); };
 
 void print_pheromone(const int color) { print_color(".", color); };
 
-void print_void(const int color) { print_color(" ", color); };
+void print_void(const int color) { print_color(" ", -1); };
 
 void print_world(const World *world) {
   // food -> 0; colony -> 1; ant -> 2; pheromone -> 3
@@ -43,28 +45,29 @@ void print_world(const World *world) {
     }
   }
 
-  for (auto pheromone : world->pheromones) {
-    types[pheromone->y][pheromone->x] = 3;
-    colors[pheromone->y][pheromone->x] = pheromone->clan;
-  }
+  for (const auto &colony : world->colonies) {
+    for (const auto &pheromone : colony->pheromones) {
+      types[pheromone->y][pheromone->x] = 3;
+      colors[pheromone->y][pheromone->x] = pheromone->clan;
+    }
 
-  for (auto colony : world->colonies) {
-    for (auto ant : colony->ants) {
+    for (const auto &ant : colony->ants) {
       types[ant->y][ant->x] = 2;
       colors[ant->y][ant->x] = colony->clan;
     }
+
     types[colony->y][colony->x] = 1;
     colors[colony->y][colony->x] = colony->clan;
   }
 
-  for (auto food : world->foods) {
+  for (const auto &food : world->foods) {
     types[food->y][food->x] = 0;
-    colors[food->y][food->x] = -1;
+    colors[food->y][food->x] = food->num;
   }
 
   int type;
   int color;
-  cout << string(world->x + 2, '_') << endl;
+  cout << string(world->x + 2, '-') << endl;
   for (int i = 0; i != world->y; i++) {
     cout << "|";
     for (int j = 0; j != world->x; j++) {
@@ -84,14 +87,14 @@ void print_world(const World *world) {
     }
     cout << "|" << endl;
   }
-  cout << string(world->x + 2, '_') << endl;
+  cout << string(world->x + 2, '-') << endl;
 };
 
-void print_amounts(const vector<int> amounts) {
-  for (int clan = 0; clan != amounts.size(); clan++) {
-    print_color("Colony; ", clan);
-    print_color(to_string(amounts[clan]), clan);
-    print_color("; ", clan);
+void print_amounts(const World *world) {
+  for (const auto &colony : world->colonies) {
+    print_color("Colony; ", colony->clan);
+    print_color(to_string(colony->amount), colony->clan);
+    print_color("; ", colony->clan);
   }
   cout << endl;
 };
