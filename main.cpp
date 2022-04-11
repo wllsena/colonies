@@ -15,13 +15,13 @@ void control() {
   }
 }
 
-void play(World *world, int n_iters, int sleep_time) {
+void play(const int n_threads, World *world, int n_iters, int sleep_time) {
   clear_console();
   cout << "Press ENTER to start, pause and resume." << endl;
 
   for (int i = 0; i != n_iters;) {
     if (paused) {
-      world->play();
+      world->play(n_threads);
       clear_console();
       print_iter(i);
       print_world(world);
@@ -33,7 +33,7 @@ void play(World *world, int n_iters, int sleep_time) {
 }
 
 int main() {
-  int threads = 1;
+  int n_threads = 1;
   int x = 50;
   int y = 20;
   int n_iters = 1000;
@@ -54,7 +54,7 @@ int main() {
   World *world = new World(x, y, foods, colonies);
 
   thread t_control(control);
-  thread t_play(play, world, n_iters, sleep_time);
+  thread t_play(play, n_threads, world, n_iters, sleep_time);
 
   t_control.join();
   t_play.join();

@@ -1,5 +1,7 @@
 #include <array>
 #include <map>
+#include <random>
+#include <thread>
 #include <vector>
 
 using namespace std;
@@ -329,7 +331,7 @@ struct Colony {
     }
   }
 
-  void play(vector<Food *> foods) {
+  void play() {
     consumers = 0;
 
     vector<Pheromone *> new_pheromens;
@@ -338,19 +340,19 @@ struct Colony {
         new_pheromens.push_back(pheromone);
 
     pheromones = new_pheromens;
+  }
 
-    array<int, 3> result;
-    for (const auto &ant : ants) {
-      result = ant->play(foods, pheromones);
+  void play_ant(const int ant_index, const vector<Food *> foods) {
+    Ant *ant = ants[ant_index];
+    array<int, 3> result = ant->play(foods, pheromones);
 
-      if (result[0] == 0 and store())
-        ant->store_food();
-      else if (result[0] == 1 and foods[result[1]]->serve())
-        ant->get_food();
-      else if (result[0] == 2)
-        pheromones.push_back(new Pheromone(num, ant->x, ant->y, result[1],
-                                           result[2], ph_timelife));
-    }
+    if (result[0] == 0 and store())
+      ant->store_food();
+    else if (result[0] == 1 and foods[result[1]]->serve())
+      ant->get_food();
+    else if (result[0] == 2)
+      pheromones.push_back(new Pheromone(num, ant->x, ant->y, result[1],
+                                         result[2], ph_timelife));
   }
 };
 
@@ -360,6 +362,7 @@ struct World {
 
   vector<Food *> foods;
   vector<Colony *> colonies;
+  vector<array<int, 2> > ant_index;
 
   World(const int x_, const int y_, const vector<Food *> foods_,
         const vector<Colony *> colonies_) {
@@ -368,13 +371,68 @@ struct World {
 
     foods = foods_;
     colonies = colonies_;
+
+    array<int, 2> index = {0, 0};
+    for (const auto &colony : colonies) {
+      for (const auto &ant : colony->ants) {
+        ant_index.push_back(index);
+        index[1] += 1;
+      }
+      index[0] += 1;
+      index[1] = 0;
+    }
   }
 
-  void play() {
+  vector<vector<array<int, 2> > *> get_ant_indexs(const int n_threads) {
+    vector<vector<array<int, 2> > *> ant_indexs;
+
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(ant_index.begin(), ant_index.end(), default_random_engine(seed));
+
+    for (int i = 0; i != n_threads; i++)
+      ant_indexs.push_back(new vector<array<int, 2> >);
+
+    int i = 0;
+    for (const auto index : ant_index) {
+      ant_indexs[i]->push_back(index);
+      if (i == n_threads - 1)
+        i = 0;
+      else
+        i += 1;
+    }
+
+    return ant_indexs;
+  }
+
+  void play_ant(vector<array<int, 2> > *ant_index) {
+    for (const auto &index : *ant_index) {
+      colonies[index[0]]->play_ant(index[1], foods);
+    }
+  }
+
+  void play_threads(const int n_threads) {
+    vector<thread> threads;
+    threads.reserve(n_threads);
+
+    vector<vector<array<int, 2> > *> ant_indexs = get_ant_indexs(n_threads);
+
+    for (const auto &ant_index_ : ant_indexs) {
+      threads.emplace_back(&World::play_ant, this, ant_index_);
+    }
+
+    for (auto &thr : threads) {
+      thr.join();
+    }
+  }
+
+  void play(const int n_threads) {
+    vector<thread> threads;
+
     for (const auto &food : foods)
       food->play();
 
     for (const auto &colony : colonies)
-      colony->play(foods);
+      colony->play();
   }
 };
+
