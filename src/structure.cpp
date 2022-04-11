@@ -1,4 +1,5 @@
 #include <array>
+#include <iostream>
 #include <map>
 #include <random>
 #include <thread>
@@ -15,7 +16,7 @@ struct Food {
   int limit;
 
   float amount_max;
-  int consumers;
+  vector<mutex *> sticks;
 
   Food(const int num_, const int x_, const int y_, const float amount_,
        const float replacement_, const int limit_) {
@@ -26,19 +27,29 @@ struct Food {
     replacement = replacement_;
     limit = limit_;
 
-    amount_max = amount_;
-    consumers = 0;
+    amount_max = amount;
+    sticks.reserve(limit_);
+    for (int i = 0; i != limit_; i++)
+      sticks.push_back(new mutex);
   }
 
-  void play() {
+  void update() {
     amount = min(amount + replacement, amount_max);
-    consumers = 0;
+    for (auto &stick : sticks)
+      stick->unlock();
+  }
+
+  bool try_stick() {
+    for (auto &stick : sticks)
+      if (stick->try_lock())
+        return true;
+
+    return false;
   }
 
   bool serve() {
-    if (amount != 0 and consumers < limit) {
+    if (amount != 0 and try_stick()) {
       amount -= 1;
-      consumers += 1;
       return true;
     } else
       return false;
@@ -63,7 +74,7 @@ struct Pheromone {
     lifetime = lifetime_;
   }
 
-  bool play() {
+  bool update() {
     lifetime -= 1;
     return lifetime != 0;
   }
@@ -79,6 +90,8 @@ struct Ant {
 
   int x;
   int y;
+  int old_x;
+  int old_y;
 
   int goal_type; // 0 -> colony; 1 -> food; 2 -> pheromone; 3 -> enemy ant;
   int goal_num;
@@ -96,6 +109,8 @@ struct Ant {
 
     x = colony_x_;
     y = colony_y_;
+    old_x = -1;
+    old_y = -1;
 
     goal_type = -1;
     goal_num = -1;
@@ -149,6 +164,8 @@ struct Ant {
   }
 
   void walk() {
+    int old_x = x;
+    int old_y = y;
     if (has_goal())
       walk_to_goal();
     else
@@ -241,12 +258,11 @@ struct Ant {
   }
 
   // return:
-  // {0, -1, -1} -> in colony
-  // {1, goal_num, -1} -> in food
-  // {2, x, y} -> going to colony
-  // {-1, -1, -1} -> none of the alternatives
-  array<int, 3> play(const vector<Food *> foods,
-                     const vector<Pheromone *> pheromones) {
+  // 0 -> in colony
+  // 1 -> in food
+  // -1 -> none of the alternatives
+  array<int, 2> update(const vector<Food *> foods,
+                       const vector<Pheromone *> pheromones) {
     if (search_colony())
       ;
     else if (search_food(foods))
@@ -258,27 +274,22 @@ struct Ant {
     else {
       reset_goal();
       walk();
-      return {-1, -1, -1};
+      return {-1, -1};
     }
 
     if (on_goal()) {
       if (goal_type == 0) // colony
-        return {0, -1, -1};
+        return {0, -1};
       else if (goal_type == 1) // food
-        return {1, goal_num, -1};
+        return {1, goal_num};
       else {
         walk();
-        return {-1, -1, -1};
+        return {-1, -1};
       }
 
-    } else if (goal_type == 0) { // colony
-      int old_x = x;
-      int old_y = y;
-      walk();
-      return {2, old_x, old_y};
     } else {
       walk();
-      return {-1, -1, -1};
+      return {-1, -1};
     }
   }
 
@@ -300,7 +311,7 @@ struct Colony {
   int ph_timelife;
 
   int amount;
-  int consumers;
+  vector<mutex *> sticks;
 
   vector<Ant *> ants;
   vector<Pheromone *> pheromones;
@@ -315,44 +326,57 @@ struct Colony {
     ph_timelife = ph_timelife_;
 
     amount = 0;
-    consumers = 0;
+    sticks.reserve(limit_);
+    for (int i = 0; i != limit_; i++)
+      sticks.push_back(new mutex);
 
+    ants.reserve(n_ants);
     for (int i = 0; i != n_ants; i++)
       ants.push_back(new Ant(num_, world_x, world_y, x_, y_, ant_vision));
   }
 
+  bool try_stick() {
+    for (auto &stick : sticks)
+      if (stick->try_lock())
+        return true;
+
+    return false;
+  }
+
   bool store() {
-    if (consumers < limit) {
+    if (try_stick()) {
       amount += 1;
-      consumers += 1;
       return true;
     } else {
       return false;
     }
   }
 
-  void play() {
-    consumers = 0;
+  void update() {
+    for (auto &stick : sticks)
+      stick->unlock();
 
-    vector<Pheromone *> new_pheromens;
+    vector<Pheromone *> new_pheromones;
+    for (const auto &ant : ants)
+      if (ant->goal_type == 0)
+        new_pheromones.push_back(new Pheromone(num, ant->x, ant->y, ant->old_x,
+                                           ant->old_y, ph_timelife));
+
     for (const auto &pheromone : pheromones)
-      if (pheromone->play())
-        new_pheromens.push_back(pheromone);
+      if (pheromone->update())
+        new_pheromones.push_back(pheromone);
 
-    pheromones = new_pheromens;
+    pheromones = new_pheromones;
   }
 
-  void play_ant(const int ant_index, const vector<Food *> foods) {
+  void update_ant(const int ant_index, const vector<Food *> foods) {
     Ant *ant = ants[ant_index];
-    array<int, 3> result = ant->play(foods, pheromones);
+    array<int, 2> result = ant->update(foods, pheromones);
 
     if (result[0] == 0 and store())
       ant->store_food();
     else if (result[0] == 1 and foods[result[1]]->serve())
       ant->get_food();
-    else if (result[0] == 2)
-      pheromones.push_back(new Pheromone(num, ant->x, ant->y, result[1],
-                                         result[2], ph_timelife));
   }
 };
 
@@ -362,7 +386,7 @@ struct World {
 
   vector<Food *> foods;
   vector<Colony *> colonies;
-  vector<array<int, 2> > ant_index;
+  vector<array<int, 2> > fix_ant_index;
 
   World(const int x_, const int y_, const vector<Food *> foods_,
         const vector<Colony *> colonies_) {
@@ -375,7 +399,7 @@ struct World {
     array<int, 2> index = {0, 0};
     for (const auto &colony : colonies) {
       for (const auto &ant : colony->ants) {
-        ant_index.push_back(index);
+        fix_ant_index.push_back(index);
         index[1] += 1;
       }
       index[0] += 1;
@@ -383,41 +407,41 @@ struct World {
     }
   }
 
-  vector<vector<array<int, 2> > *> get_ant_indexs(const int n_threads) {
-    vector<vector<array<int, 2> > *> ant_indexs;
-
+  vector<vector<array<int, 2> > *> get_ant_index(const int n_threads) {
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(ant_index.begin(), ant_index.end(), default_random_engine(seed));
+    shuffle(fix_ant_index.begin(), fix_ant_index.end(),
+            default_random_engine(seed));
 
+    vector<vector<array<int, 2> > *> ant_index;
+    ant_index.reserve(n_threads);
     for (int i = 0; i != n_threads; i++)
-      ant_indexs.push_back(new vector<array<int, 2> >);
+      ant_index.push_back(new vector<array<int, 2> >);
 
     int i = 0;
-    for (const auto index : ant_index) {
-      ant_indexs[i]->push_back(index);
+    for (const auto index : fix_ant_index) {
+      ant_index[i]->push_back(index);
       if (i == n_threads - 1)
         i = 0;
       else
         i += 1;
     }
 
-    return ant_indexs;
+    return ant_index;
   }
 
-  void play_ant(vector<array<int, 2> > *ant_index) {
+  void update_ants(vector<array<int, 2> > *ant_index) {
     for (const auto &index : *ant_index) {
-      colonies[index[0]]->play_ant(index[1], foods);
+      colonies[index[0]]->update_ant(index[1], foods);
     }
   }
 
-  void play_threads(const int n_threads) {
+  void update_threads(const int n_threads) {
+    vector<vector<array<int, 2> > *> ant_index = get_ant_index(n_threads);
+
     vector<thread> threads;
     threads.reserve(n_threads);
-
-    vector<vector<array<int, 2> > *> ant_indexs = get_ant_indexs(n_threads);
-
-    for (const auto &ant_index_ : ant_indexs) {
-      threads.emplace_back(&World::play_ant, this, ant_index_);
+    for (const auto &ant_index_ : ant_index) {
+      threads.emplace_back(&World::update_ants, this, ant_index_);
     }
 
     for (auto &thr : threads) {
@@ -425,14 +449,13 @@ struct World {
     }
   }
 
-  void play(const int n_threads) {
-    vector<thread> threads;
-
+  void update(const int n_threads) {
     for (const auto &food : foods)
-      food->play();
+      food->update();
 
     for (const auto &colony : colonies)
-      colony->play();
+      colony->update();
+
+    update_threads(n_threads);
   }
 };
-

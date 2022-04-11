@@ -21,7 +21,7 @@ void play(const int n_threads, World *world, int n_iters, int sleep_time) {
 
   for (int i = 0; i != n_iters;) {
     if (paused) {
-      world->play(n_threads);
+      world->update(n_threads);
       clear_console();
       print_iter(i);
       print_world(world);
@@ -33,7 +33,7 @@ void play(const int n_threads, World *world, int n_iters, int sleep_time) {
 }
 
 int main() {
-  int n_threads = 1;
+  int n_threads = 2;
   int x = 50;
   int y = 20;
   int n_iters = 1000;
