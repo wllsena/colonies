@@ -1,6 +1,7 @@
 #include "../include/colors.hpp"
 #include "structure.cpp"
 #include <iostream>
+#include <string>
 
 using namespace std;
 
@@ -29,7 +30,7 @@ void print_iter(const int iter) {
   cout << endl;
 };
 
-void print_food(const int color) { print_color("#", -1); };
+void print_food(const int color) { print_color(to_string(color), -1); };
 
 void print_colony(const int color) { print_color("O", color); };
 
@@ -102,7 +103,7 @@ void print_values(const World *world) {
     print_color(". Amount: ", -1);
     print_color(to_string(int(food->amount)), -1);
     print_color(". Consumers: ", -1);
-    // print_color(to_string(food->consumers), -1);
+    print_color(to_string(food->count_sticks()), -1);
     print_color(".", -1);
 
     cout << endl;
@@ -114,7 +115,7 @@ void print_values(const World *world) {
     print_color(". Food: ", colony->num);
     print_color(to_string(colony->amount), colony->num);
     print_color(". Inside: ", colony->num);
-    // print_color(to_string(colony->consumers), colony->num);
+    print_color(to_string(colony->count_sticks()), colony->num);
     print_color(". Ants: ", colony->num);
     print_color(to_string(colony->ants.size()), colony->num);
     print_color(". Pheromones: ", colony->num);

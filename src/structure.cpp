@@ -47,6 +47,16 @@ struct Food {
     return false;
   }
 
+  int count_sticks() {
+    int count = 0;
+
+    for (auto &stick : sticks)
+      if (not stick->try_lock())
+        count += 1;
+
+    return count;
+  }
+
   bool serve() {
     if (amount != 0 and try_stick()) {
       amount -= 1;
@@ -341,6 +351,16 @@ struct Colony {
         return true;
 
     return false;
+  }
+
+  int count_sticks() {
+    int count = 0;
+
+    for (auto &stick : sticks)
+      if (not stick->try_lock())
+        count += 1;
+
+    return count;
   }
 
   bool store() {
