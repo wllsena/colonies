@@ -9,3 +9,115 @@
 
 [[./demo.gif]]
 
+* Classes
+
+** Públicas
+
+*** Food(int num, int x, int y, float amount, float replacement, int limit)
+
+    - num: índice da comida (mostrado no display).
+    - x e y: posição.
+    - amount: quantidade inicial e máxima de comida.
+    - replacement: taxa de reposição de comida.
+    - limit: número máximo de formigas que podem coletar de forma concorrente.
+
+    Exemplo: Food(0, 30, 15, 10, 1, 5)
+
+    Cada comida possui um vetor de sticks (mutex), para uma formiga coletar 1 de comida é preciso pelo menos um stick leve, então ele é bloqueado por ela e é subtraído 1 da quantidade de comida.
+
+    No inicio do turno todos os sticks são desbloqueados e é somado à quantidade de comida a taxa de reposição de comida.
+
+    É representado pelo número de seu índice, cor branca, no mapa.
+
+*** Colony(int num, int x, int y, int limit, int ph_timelife, int n_ants, int ant_vision, int world_x, int world_y)
+
+    - num: índice da colonia (mostrado no display).
+    - colony_x, colony_y: posição.
+    - limit: número máximo de formigas que podem guardar de forma concorrente.
+    - n_ants: número de formigas.
+    - ant_vision: campo de visão das formigas.
+    - word_x e word_y: tamanho do mundo.
+
+    Cada colonia possui um vetor de sticks (mutex), para uma formiga guardar 1 de comida é preciso pelo menos um stick leve, então ele é bloqueado por ela e é adicionado 1 da quantidade de comida.
+
+    No inicio do turno todos os sticks são desbloqueados.
+
+    É representado por 'O' da cor do seu índice no mapa.
+
+*** World(int n_threads, int x, int y, vector<Food *> foods, vector<Colony *> colonies)
+
+    - n_threads: número de threads para o paralelismo.
+    - x e y: posição.
+    - foods: vetor de ponteiros para as comidas.
+    - colonies: vetor de ponteiros para as colonias.
+
+    A cada turno divide aleatoriamente todas as formigas em grupos para cada thread, então paralelamente é rodado o turno das formigas.
+
+** Privadas
+
+*** Pheromone(int num, int x, int y, int from_x, int from_y, int lifetime)
+
+    - num: índice da colonia.
+    - x e y: posição.
+    - from_x e from_y: posição do turno anterior da formiga com a comida.
+    - lifetime: tempo de vida do feromônio.
+
+    Exemplo: Pheromone(0, 15, 20, 14, 19, 4)
+
+    No início de cada turno feromônios são adicionados a cada posição formiga com comida (indo para colonia), é subtraído 1 do tempo de vida dos feromônios ativos e aqueles com esse valor igual a zero desaparecem.
+
+    É representado por '.' da cor do seu índice no mapa.
+
+*** Ant(int num, int world_x, int world_y, int colony_x, int colony_y, int vision)
+
+    - num: índice da colonia.
+    - word_x e word_y: tamanho do mundo.
+    - colony_x, colony_y: posição da colonia e posições iniciais da formiga.
+    - vision: campo de visão da formiga. É usado a distância de Manhattan para determinar se um objeto está no campo de visão.
+
+     Exemplo: Ant(0, 100, 100, 20, 30, 5)
+
+     A cada turno, se o objetivo da formiga não for voltar até a colonia para guardar a comida, ela procura um objetivo em seu campo de visão, primeiro comida, depois feromônio. Após, se a formiga não tiver um objeto ela anda um passo aleatório para uma das direções disponíveis. Se a formiga tiver um objetivo, então ela anda um passo até ele, sempre tomando a direção mais distante do objetivo. Ex: se a distância no x for 20 e no y for 10, então ela anda no eixo das abscissas. Se a formiga estiver no seu objetivo, ela checa se há stick disponível, se tiver ela coleta, no caso da comida, ou guarda, no caso da colonia, a comida.
+
+     É representado por 'x' da cor do seu índice no mapa.
+
+* Exemplo de cenário (main.cpp):
+
+  #+BEGIN_SRC c++
+    #include "src/game.cpp"
+    #include <iostream>
+    
+    using namespace std;
+    
+    int main() {
+      int n_threads = 2;
+      int x = 50;
+      int y = 20;
+      int n_iters = 1000;
+      int sleep_time = 250000;
+    
+      vector<Food *> foods;
+      foods.push_back(new Food(0, 30, 15, 10, 1, 5));
+      foods.push_back(new Food(1, 40, 17, 7, 0.1, 2));
+      foods.push_back(new Food(2, 25, 10, 20, 2, 2));
+      foods.push_back(new Food(3, 10, 12, 2, 0.25, 3));
+    
+      vector<Colony *> colonies;
+      colonies.push_back(new Colony(0, 5, 5, 2, 8, 20, 10, x, y));
+      colonies.push_back(new Colony(1, 48, 0, 2, 10, 15, 15, x, y));
+      colonies.push_back(new Colony(2, 5, 18, 2, 12, 30, 5, x, y));
+      colonies.push_back(new Colony(3, 20, 3, 2, 5, 20, 10, x, y));
+      colonies.push_back(new Colony(4, 25, 18, 1, 2, 20, 2, x, y));
+    
+      World *world = new World(n_threads, x, y, foods, colonies);
+    
+      play(world, n_iters, sleep_time);
+    }
+  #+END_SRC
+
+* Compilação e play
+
+  #+BEGIN_SRC shell
+    g++ -std=c++17 main.cpp
+    ./a.out
+  #+END_SRC

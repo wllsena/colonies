@@ -380,7 +380,7 @@ struct Colony {
     for (const auto &ant : ants)
       if (ant->goal_type == 0)
         new_pheromones.push_back(new Pheromone(num, ant->x, ant->y, ant->old_x,
-                                           ant->old_y, ph_timelife));
+                                               ant->old_y, ph_timelife));
 
     for (const auto &pheromone : pheromones)
       if (pheromone->update())
@@ -401,15 +401,16 @@ struct Colony {
 };
 
 struct World {
+  int n_threads;
   int x;
   int y;
-
   vector<Food *> foods;
   vector<Colony *> colonies;
   vector<array<int, 2> > fix_ant_index;
 
-  World(const int x_, const int y_, const vector<Food *> foods_,
-        const vector<Colony *> colonies_) {
+  World(const int n_threads_, const int x_, const int y_,
+        const vector<Food *> foods_, const vector<Colony *> colonies_) {
+    n_threads = n_threads_;
     x = x_;
     y = y_;
 
@@ -427,7 +428,7 @@ struct World {
     }
   }
 
-  vector<vector<array<int, 2> > *> get_ant_index(const int n_threads) {
+  vector<vector<array<int, 2> > *> get_ant_index() {
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(fix_ant_index.begin(), fix_ant_index.end(),
             default_random_engine(seed));
@@ -455,8 +456,8 @@ struct World {
     }
   }
 
-  void update_threads(const int n_threads) {
-    vector<vector<array<int, 2> > *> ant_index = get_ant_index(n_threads);
+  void update_threads() {
+    vector<vector<array<int, 2> > *> ant_index = get_ant_index();
 
     vector<thread> threads;
     threads.reserve(n_threads);
@@ -469,13 +470,13 @@ struct World {
     }
   }
 
-  void update(const int n_threads) {
+  void update() {
     for (const auto &food : foods)
       food->update();
 
     for (const auto &colony : colonies)
       colony->update();
 
-    update_threads(n_threads);
+    update_threads();
   }
 };
