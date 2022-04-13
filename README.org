@@ -32,7 +32,7 @@
 *** Colony(int num, int x, int y, int limit, int ph_timelife, int n_ants, int ant_vision, int world_x, int world_y)
 
     - num: índice da colonia (mostrado no display).
-    - colony_x, colony_y: posição.
+    - x, y: posição.
     - limit: número máximo de formigas que podem guardar de forma concorrente.
     - n_ants: número de formigas.
     - ant_vision: campo de visão das formigas.
