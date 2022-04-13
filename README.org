@@ -34,9 +34,12 @@
     - num: índice da colonia (mostrado no display).
     - x, y: posição.
     - limit: número máximo de formigas que podem guardar de forma concorrente.
+    - ph_timelife: tempo de vida dos feromônios.
     - n_ants: número de formigas.
     - ant_vision: campo de visão das formigas.
     - word_x e word_y: tamanho do mundo.
+
+    Exemplo: Colony(0, 5, 5, 2, 8, 20, 10, 100, 100)
 
     Cada colonia possui um vetor de sticks (mutex), para uma formiga guardar 1 de comida é preciso pelo menos um stick leve, então ele é bloqueado por ela e é adicionado 1 da quantidade de comida.
 
@@ -50,6 +53,8 @@
     - x e y: posição.
     - foods: vetor de ponteiros para as comidas.
     - colonies: vetor de ponteiros para as colonias.
+
+    Exemplo: World(n_threads, x, y, foods, colonies)
 
     A cada turno divide aleatoriamente todas as formigas em grupos para cada thread, então paralelamente é rodado o turno das formigas.
 
