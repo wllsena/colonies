@@ -32,7 +32,7 @@ void print_iter(const int iter) {
 
 void print_food(const int color) { print_color(to_string(color), -1); };
 
-void print_colony(const int color) { print_color("O", color); };
+void print_colony(const int color) { print_color("#", color); };
 
 void print_ant(const int color) { print_color("x", color); };
 
@@ -96,31 +96,33 @@ void print_world(const World *world) {
   cout << string(world->x + 2, '-') << endl;
 };
 
-void print_values(const World *world) {
-  for (const auto &food : world->foods) {
+void print_values(World *world) {
+  vector<vector<int> > stats_food = world->get_stats_foods();
+  for (vector<int> stats : stats_food) {
     print_color("Food: ", -1);
-    print_color(to_string(food->num), -1);
+    print_color(to_string(stats[0]), -1);
     print_color(". Amount: ", -1);
-    print_color(to_string(int(food->amount)), -1);
+    print_color(to_string(stats[1]), -1);
     print_color(". Consumers: ", -1);
-    print_color(to_string(food->count_sticks()), -1);
+    print_color(to_string(stats[2]), -1);
     print_color(".", -1);
 
     cout << endl;
   }
 
-  for (const auto &colony : world->colonies) {
-    print_color("Colony: ", colony->num);
-    print_color(to_string(colony->num), colony->num);
-    print_color(". Food: ", colony->num);
-    print_color(to_string(colony->amount), colony->num);
-    print_color(". Inside: ", colony->num);
-    print_color(to_string(colony->count_sticks()), colony->num);
-    print_color(". Ants: ", colony->num);
-    print_color(to_string(colony->ants.size()), colony->num);
-    print_color(". Pheromones: ", colony->num);
-    print_color(to_string(colony->pheromones.size()), colony->num);
-    print_color(".", colony->num);
+  vector<vector<int> > stats_colonies = world->get_stats_colonies();
+  for (vector<int> stats : stats_colonies) {
+    print_color("Colony: ", stats[0]);
+    print_color(to_string(stats[0]), stats[0]);
+    print_color(". Food: ", stats[0]);
+    print_color(to_string(stats[1]), stats[0]);
+    print_color(". Inside: ", stats[0]);
+    print_color(to_string(stats[2]), stats[0]);
+    print_color(". Ants: ", stats[0]);
+    print_color(to_string(stats[3]), stats[0]);
+    print_color(". Pheromones: ", stats[0]);
+    print_color(to_string(stats[4]), stats[0]);
+    print_color(".", stats[0]);
 
     cout << endl;
   }

@@ -64,6 +64,16 @@ struct Food {
     } else
       return false;
   }
+
+  vector<int> get_stats() {
+    vector<int> stats;
+    stats.reserve(3);
+    stats.push_back(num);
+    stats.push_back(amount);
+    stats.push_back(count_sticks());
+
+    return stats;
+  }
 };
 
 struct Pheromone {
@@ -398,6 +408,18 @@ struct Colony {
     else if (result[0] == 1 and foods[result[1]]->serve())
       ant->get_food();
   }
+
+  vector<int> get_stats() {
+    vector<int> stats;
+    stats.reserve(5);
+    stats.push_back(num);
+    stats.push_back(amount);
+    stats.push_back(count_sticks());
+    stats.push_back(ants.size());
+    stats.push_back(pheromones.size());
+
+    return stats;
+  }
 };
 
 struct World {
@@ -478,5 +500,23 @@ struct World {
       colony->update();
 
     update_threads();
+  }
+
+  vector<vector<int> > get_stats_foods() {
+    vector<vector<int> > stats;
+    stats.reserve(foods.size());
+    for (const auto &food : foods) {
+      stats.push_back(food->get_stats());
+    }
+    return stats;
+  }
+
+  vector<vector<int> > get_stats_colonies() {
+    vector<vector<int> > stats;
+    stats.reserve(colonies.size());
+    for (const auto &colony : colonies) {
+      stats.push_back(colony->get_stats());
+    }
+    return stats;
   }
 };
